@@ -1,7 +1,9 @@
 package com.aninfo;
 
 import com.aninfo.model.Account;
+import com.aninfo.model.Transaction;
 import com.aninfo.service.AccountService;
+import com.aninfo.service.TransactionService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -26,6 +28,7 @@ public class Memo1BankApp {
 
 	@Autowired
 	private AccountService accountService;
+	private TransactionService transactionService;
 
 	public static void main(String[] args) {
 		SpringApplication.run(Memo1BankApp.class, args);
@@ -65,15 +68,20 @@ public class Memo1BankApp {
 		accountService.deleteById(cbu);
 	}
 
-	@PutMapping("/accounts/{cbu}/withdraw")
-	public Account withdraw(@PathVariable Long cbu, @RequestParam Double sum) {
-		return accountService.withdraw(cbu, sum);
+	@PostMapping("/accounts/withdraw")
+	public Account withdraw(@RequestBody Transaction trx) {
+		Account account = accountService.findById(trx.getAccount()).get();
+		if (account.getBalance() >= trx.getAmount()) {
+			transactionService.createTransaction(trx);
+			return accountService.withdraw(trx.getAccount(), trx.getAmount());
+		}
+		return account;
 	}
 
-	@PutMapping("/accounts/{cbu}/deposit")
-	public Account deposit(@PathVariable Long cbu, @RequestParam Double sum) {
-		return accountService.deposit(cbu, sum);
-	}
+	//@PostMapping("/accounts/deposit")
+	//public Account deposit(@RequestBody Transaction trx) {
+	//	return accountService.deposit(cbu, sum);
+	//}
 
 	@Bean
 	public Docket apiDocket() {
